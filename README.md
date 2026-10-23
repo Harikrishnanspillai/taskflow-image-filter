@@ -61,6 +61,8 @@ CPU and GPU pipelines are timed separately. GPU measurements can include transfe
 - CMake
 - Python and Matplotlib for benchmark plotting
 
+The host compiler must be compatible with the installed CUDA Toolkit. The build commands below use GCC 13 as an example; adjust the compiler paths if necessary.
+
 ## Repository Layout
 
 ```text
@@ -91,14 +93,41 @@ Main dependencies:
 
 Compiler and toolkit paths may need to be adjusted for other systems.
 
+## Install Dependencies (Ubuntu / WSL2)
+
+Install the standard build tools and OpenCV development package:
+
+```bash
+sudo apt update
+sudo apt install -y cmake build-essential libopencv-dev git python3 python3-pip python3-venv
+```
+
+Install Matplotlib in a virtual environment:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install matplotlib
+```
+
+Install the **NVIDIA CUDA Toolkit** using NVIDIA's official installation instructions: https://developer.nvidia.com/cuda-downloads
+
+A CUDA-compatible NVIDIA GPU and working CUDA support in WSL2 are required for GPU execution. On WSL2, the NVIDIA driver should be installed on the Windows host; do not install a separate Linux NVIDIA display driver inside WSL2.
+
+Verify the required tools are available:
+
+```bash
+g++ --version
+cmake --version
+nvcc --version
+```
+
 ## Build
 
 From the repository root:
 
 ```bash
-cmake -S . -B build \
-  -DCMAKE_CXX_COMPILER=/usr/bin/g++-13 \
-  -DCMAKE_CUDA_HOST_COMPILER=/usr/bin/g++-13
+cmake -S . -B build 
 
 cmake --build build -j2
 ```
@@ -154,7 +183,3 @@ Label chart metrics clearly: end-to-end wall time covers the work inside the rel
 - GPU performance is not guaranteed to exceed CPU performance for every batch or machine.
 - For simple 3×3 filters, transfer and scheduling overhead can be significant relative to kernel time.
 - Compiler/CUDA versions, GPU model, image dimensions, and system load can affect timing results.
-
-## License
-
-Add the license and third-party attribution terms applicable to this repository and its included dependencies before redistributing it.
