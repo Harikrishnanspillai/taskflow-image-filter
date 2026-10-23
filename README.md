@@ -175,7 +175,7 @@ For a report or presentation, include the batch size, hardware configuration, an
 
 Normal benchmark runs append summary rows to a CSV file. The plotting utility in `scripts/plot_results.py` can be used to visualize recorded measurements, subject to the CSV format produced by the current build.
 
-Label chart metrics clearly: end-to-end wall time covers the work inside the relevant timer, while summed task durations may overlap and should not be added together as if they were sequential.
+![Bar chart of CPU vs GPU](chart.png)
 
 ## Notes and Limitations
 
