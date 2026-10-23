@@ -1,0 +1,94 @@
+enable_testing()
+
+# Distributions build the tests against an installed doctest instead of the
+# copy in 3rd-party/doctest.
+option(TF_USE_SYSTEM_DOCTEST "Build unit tests with an installed doctest" OFF)
+if(TF_USE_SYSTEM_DOCTEST)
+  find_package(doctest REQUIRED)
+  include(${doctest_DIR}/doctest.cmake)
+  find_path(TF_DOCTEST_INCLUDE_DIR doctest.h PATH_SUFFIXES doctest REQUIRED)
+else()
+  include(${TF_3RD_PARTY_DIR}/doctest/doctest.cmake)
+  set(TF_DOCTEST_INCLUDE_DIR ${TF_3RD_PARTY_DIR}/doctest)
+endif()
+
+list(APPEND TF_UNITTESTS 
+  test_utility 
+  test_iterators
+  test_object_pool
+  test_wsq
+  test_spsc
+  test_basics 
+  test_notifiers
+  test_work_stealing 
+  #test_serializer 
+  test_workers
+  test_asyncs
+  test_dependent_asyncs
+  test_subflows
+  test_control_flow
+  test_semaphores
+  test_movable
+  test_cancellation
+  test_partitioners
+  test_for_each
+  test_reduce
+  test_transform
+  test_sort
+  test_scan
+  test_find
+  test_modules
+  test_merge
+  test_traversals
+  test_runtimes
+  test_task_group
+  test_pipelines
+  test_scalable_pipelines
+  test_data_pipelines
+  test_fill
+  test_generate
+)
+
+# task-priority tests exercise end-to-end priority ordering, which only holds
+# when the feature is compiled in; register them only then
+if(TF_ENABLE_TASK_PRIORITY)
+  message(STATUS "Add test_graph_priorities to unit tests")
+  list(APPEND TF_UNITTESTS test_graph_priorities)
+endif()
+
+# we only do exception tests if sanitizer is not enabled
+string(FIND '${CMAKE_CXX_FLAGS}' "-fsanitize" sanitize)
+#message("sanitize='${sanitize}'")
+
+if(${sanitize} EQUAL -1)
+  message(STATUS "Add test_exception to unit tests")
+  list(APPEND TF_UNITTESTS test_exceptions)
+endif()
+
+
+foreach(unittest IN LISTS TF_UNITTESTS)
+  add_executable(${unittest} ${unittest}.cpp)
+  target_link_libraries(${unittest} ${PROJECT_NAME} ${ATOMIC_LIBRARY} tf::default_settings)
+  target_include_directories(${unittest} PRIVATE ${TF_DOCTEST_INCLUDE_DIR})
+  doctest_discover_tests(${unittest})
+endforeach()
+
+# test_for_each and test_reduce use high-dimensional IndexRange templates
+# that exceed MSVC's default object file section limit — /bigobj raises it
+# from 2^16 to 2^32.
+if(MSVC)
+  target_compile_options(test_for_each PRIVATE /bigobj)
+  target_compile_options(test_iterators PRIVATE /bigobj)
+  target_compile_options(test_reduce PRIVATE /bigobj)
+endif()
+
+# include C++ module tests
+if(TF_BUILD_MODULES)
+  add_subdirectory(${TF_UTEST_DIR}/modules)
+endif()
+
+# include CUDA tests
+if(TF_BUILD_CUDA)
+  add_subdirectory(${TF_UTEST_DIR}/cuda)
+endif()
+
