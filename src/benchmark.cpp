@@ -138,20 +138,22 @@ void record_and_print_speedup(double cpu_ms, double gpu_ms) {
     return;
   }
 
+  const double speedup = cpu_ms / gpu_ms;
+
   if (needs_header) {
-    csv << "label,cpu_ms,gpu_ms,end_to_end_ms\n";
+    csv << "label,cpu_ms,gpu_ms,speedup\n";
   }
 
   csv << "Run " << run_number << ','
       << std::fixed << std::setprecision(3)
       << cpu_ms << ','
       << gpu_ms << ','
-      << gpu_ms << '\n';
+      << speedup << '\n';
 
   std::cout << "\n=== CPU vs GPU comparison ===\n"
             << "CPU-only wall time: " << cpu_ms << " ms\n"
             << "GPU filtering phase wall time: " << gpu_ms << " ms\n"
-            << "Speedup: " << cpu_ms / gpu_ms << "x\n"
+            << "Speedup: " << speedup << "x\n"
             << "Saved comparison as Run " << run_number
             << " in " << csv_file << '\n';
 }
